@@ -1,11 +1,12 @@
 package com.cn.selenium.spider.controller;
 
+import com.alibaba.fastjson.JSON;
 import com.cn.selenium.spider.entity.reponse.Result;
 import com.cn.selenium.spider.entity.request.RequestParams;
 import com.cn.selenium.spider.service.SpiderService;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.cn.selenium.spider.service.impl.RabbitMqSender;
+import com.cn.selenium.spider.socket.WebSocket;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 
@@ -19,15 +20,30 @@ public class SpiderController {
 
 	@Resource
 	SpiderService spiderService;
+	@Resource
+	WebSocket webSocket;
+	@Resource
+	RabbitMqSender rabbitMqSender;
 
 	@RequestMapping("/run")
 	public Result spider(@RequestBody RequestParams requestParams) {
 		try {
-			spiderService.loginQqZone(requestParams.getQq(), requestParams.getPassword(), requestParams.getDriverPath());
+			return rabbitMqSender.send(JSON.toJSONString(requestParams));
 		} catch (Exception e) {
 			e.printStackTrace();
 			return Result.FAIL("操作失败！");
 		}
-		return Result.SUCCESS(null);
+	}
+
+
+	@GetMapping("/socket/{userName}")
+	public Result socket(@PathVariable(value = "userName") String userName) {
+		try {
+			webSocket.sendAllMessage(userName);
+			return Result.SUCCESS(null, "操作成功！");
+		} catch (Exception e) {
+			e.printStackTrace();
+			return Result.FAIL("操作失败！");
+		}
 	}
 }

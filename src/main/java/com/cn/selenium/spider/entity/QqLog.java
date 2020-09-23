@@ -7,10 +7,7 @@ import java.util.Date;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.apache.ibatis.annotations.ConstructorArgs;
 
 /**
@@ -26,12 +23,13 @@ import org.apache.ibatis.annotations.ConstructorArgs;
 @TableName("qq_log")
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString
 public class QqLog implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     @TableId
-    private long id;
+    private Long id;
 
     /**
      * 登录的qq号
@@ -87,5 +85,19 @@ public class QqLog implements Serializable {
         qqLog.setMessage(message);
         qqLog.setExceptionContent(exceptionContent);
         return qqLog;
+    }
+
+    @Override
+    public String toString() {
+        return "QqLog{" +
+                "id=" + id +
+                ", qq='" + qq + '\'' +
+                ", spiderQq='" + spiderQq + '\'' +
+                ", isSuccess=" + isSuccess +
+                ", exceptionContent='" + exceptionContent + '\'' +
+                ", createTime=" + createTime +
+                ", updateTime=" + updateTime +
+                ", message='" + message + '\'' +
+                '}';
     }
 }

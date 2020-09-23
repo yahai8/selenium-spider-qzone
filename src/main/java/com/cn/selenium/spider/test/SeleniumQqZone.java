@@ -36,7 +36,10 @@ import java.util.regex.Pattern;
 @Slf4j
 public class SeleniumQqZone {
 	public static void main(String[] args) throws IOException {
-		loginQqZone();
+		String message = "";
+		if (message == null || message =="") {
+			System.out.println("hhahahah");
+		}
 	}
 
 	private static void loginQqZone() {

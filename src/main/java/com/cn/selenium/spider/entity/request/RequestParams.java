@@ -8,7 +8,7 @@ import lombok.Data;
  */
 @Data
 public class RequestParams {
-	private String qq;
-	private String password;
+	private String username;
+	private String pass;
 	private String driverPath;
 }

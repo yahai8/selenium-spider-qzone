@@ -55,7 +55,7 @@ public class QzoneUtil {
 	 */
 	public static String download(String url,Map friendMap){
 		URL url1 = null;
-		String dir = System.getProperty("user.dir")+"/selenium/src/main/resources/static/";
+		String dir = System.getProperty("user.dir")+"/src/main/resources/static/";
 		String localPath = null;
 		try {
 			url1 = new URL(url);
@@ -97,18 +97,14 @@ public class QzoneUtil {
 	public static String get_g_qZoneToken(String pageSource) {
 		String regex = "window.g_qzonetoken = \\(function\\(\\)\\{ try\\{return \".*?\";\\} catch\\(e\\)";
 		boolean contains = ReUtil.contains(regex, pageSource);
-		System.out.println(contains);
 		Pattern pattern = Pattern.compile(regex);
 		Matcher matcher = pattern.matcher(pageSource);
-		System.out.println("str:" + pageSource);
-		System.out.println("regex:"+regex);
 		if (!matcher.find()) {
 			log.error("token获取失败，即将终止！");
 			return null;
 		}
 		String group = matcher.group(0);
 		String substring = group.substring(group.indexOf("\"")+1, group.lastIndexOf("\""));
-		System.out.println("matcher: " + substring);
 		return substring;
 	}
 

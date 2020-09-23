@@ -26,6 +26,12 @@ public class Result<T> {
 				.setData(data);
 	}
 
+	public static <T> Result<T> SUCCESS(String message) {
+		return new Result()
+				.setCode(200)
+				.setMessage(message);
+	}
+
 	public static Result FAIL(String message) {
 		return new Result()
 				.setCode(400)

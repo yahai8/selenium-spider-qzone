@@ -48,5 +48,6 @@ public class QqArticle implements Serializable {
     @TableField("create_time")
     private String createTime;
 
-
+    @TableField("friend_qq")
+    private String friendQq;
 }

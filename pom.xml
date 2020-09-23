@@ -20,6 +20,10 @@
         <swagger-annotations.version>1.6.0</swagger-annotations.version>
     </properties>
 <dependencies>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-websocket</artifactId>
+    </dependency>
 <!--     https://mvnrepository.com/artifact/com.baomidou/mybatis-plus-boot-starter -->
     <dependency>
         <groupId>com.baomidou</groupId>
@@ -127,7 +131,11 @@
         <artifactId>mysql-connector-java</artifactId>
         <version>8.0.14</version>
     </dependency>
-
+    <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-amqp -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-amqp</artifactId>
+    </dependency>
 <!--        &lt;!&ndash; https://mvnrepository.com/artifact/com.google.code.gson/gson &ndash;&gt;
         <dependency>
             <groupId>com.google.code.gson</groupId>

@@ -55,6 +55,9 @@ public class QzoneUtil {
 	 */
 	public static String download(String url,Map friendMap){
 		URL url1 = null;
+		if (!url.startsWith("http")) {
+			return null;
+		}
 		String dir = System.getProperty("user.dir")+"/src/main/resources/static/";
 		String localPath = null;
 		try {

@@ -2,6 +2,7 @@ package com.cn.selenium.spider.test;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IoUtil;
+import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ReUtil;
 import cn.hutool.core.util.StrUtil;
@@ -36,10 +37,9 @@ import java.util.regex.Pattern;
 @Slf4j
 public class SeleniumQqZone {
 	public static void main(String[] args) throws IOException {
-		String message = "";
-		if (message == null || message =="") {
-			System.out.println("hhahahah");
-		}
+		Date date = new Date();
+		date.setTime(1551798059000L);
+		System.out.println(date);
 	}
 
 	private static void loginQqZone() {
@@ -424,5 +424,41 @@ public class SeleniumQqZone {
 			return true;
 		}
 		return true;
+	}
+
+
+	public static void get_photo(Long gtk,String friendQq,String qq,Map cookie) throws IOException {
+		String url = "https://user.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/fcg_list_album_v3?g_tk="+gtk+"&callback=shine0_Callback&t=469158111&hostUin="+friendQq+"&uin="+qq+"&appid=4&inCharset=utf-8&outCharset=utf-8&source=qzone&plat=qzone&format=jsonp&notice=0&filter=1&handset=4&pageNumModeSort=40&pageNumModeClass=15&needUserInfo=1&idcNum=4&callbackFun=shine0&_=1600913159677";
+		String text = get_response(url, cookie);
+		String sub = StrUtil.sub(text, text.indexOf("(")+1, text.lastIndexOf(")"));
+		JSONObject jsonObject = JSON.parseObject(sub);
+		JSONObject data = (JSONObject) jsonObject.get("data");
+		JSONArray albumListModeSort = (JSONArray) data.get("albumListModeSort");
+		for (int i = 0; i < albumListModeSort.size(); i++) {
+			JSONObject obj = (JSONObject) albumListModeSort.get(i);
+			Object topicId = obj.get("id");
+			String name = String.valueOf(obj.get("name"));
+			if (name == null || name == "") {
+				name = String.valueOf(obj.get("desc"));
+			}
+			System.out.println(topicId);
+			int pageStart = 0;
+			int pageNum = 0;
+			String url2="https://h5.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/cgi_list_photo?g_tk="+gtk+"&callback=shine0_Callback&t=952444063&mode=0&idcNum=4&hostUin="+friendQq+"&topicId="+topicId+"&noTopic=0&uin="+qq+"&pageStart="+pageStart+"&pageNum="+pageNum+"&skipCmtCount=0&singleurl=1&batchId=&notice=0&appid=4&inCharset=utf-8&outCharset=utf-8&source=qzone&plat=qzone&outstyle=json&format=jsonp&json_esc=1&question=&answer=&callbackFun=shine0&_=1551790719497";
+			String text2 = get_response(url2, cookie);
+			String sub2 = StrUtil.sub(text2, text2.indexOf("(")+1, text2.lastIndexOf(")"));
+			JSONObject jsonObject2 = JSONObject.parseObject(sub2);
+			JSONObject data2 = (JSONObject) jsonObject2.get("data");
+			JSONArray  photoList = (JSONArray) data2.get("photoList");
+			for (int j = 0; j < photoList.size(); j++) {
+				JSONObject photo = (JSONObject) photoList.get(j);
+				Object url1 = photo.get("url");
+				String path = name + "-" + UUID.randomUUID();
+				Object desc = photo.get("desc");
+				Object uploadtime = photo.get("uploadtime");
+				System.out.println(path+","+desc+","+uploadtime);
+			}
+
+		}
 	}
 }

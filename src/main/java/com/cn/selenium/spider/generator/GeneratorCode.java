@@ -22,7 +22,7 @@ public class GeneratorCode {
 
 	public static void main(String[] args) {
 		AutoGenerator mpg = new AutoGenerator();
-		String projectPath = System.getProperty("user.dir")+"/selenium";
+		String projectPath = System.getProperty("user.dir");
 		GlobalConfig globalConfig = new GlobalConfig();
 		globalConfig.setOutputDir(projectPath + "/src/main/java");
 		globalConfig.setAuthor("MuYaHai");

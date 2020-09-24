@@ -1,15 +1,13 @@
 package com.cn.selenium.spider.service.impl;
 
+import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.cn.selenium.spider.entity.QqArticle;
-import com.cn.selenium.spider.entity.QqComment;
-import com.cn.selenium.spider.entity.QqLog;
-import com.cn.selenium.spider.entity.QqSource;
+import com.cn.selenium.spider.entity.*;
 import com.cn.selenium.spider.entity.reponse.Result;
 import com.cn.selenium.spider.service.*;
 import com.cn.selenium.spider.socket.WebSocket;
@@ -48,6 +46,14 @@ public class SpiderServiceImpl implements SpiderService {
 	IQqCommentService qqCommentService;
 	@Resource
 	IQqSourceService qqSourceService;
+	@Resource
+	IQqFriendsService friendsService;
+	@Resource
+	IQqPhotoAlbumService photoAlbumService;
+	@Resource
+	IQqPhotoService photoService;
+	@Resource
+	RabbitMqSender rabbitMqSender;
 	@Resource
 	WebSocket webSocket;
 
@@ -145,9 +151,16 @@ public class SpiderServiceImpl implements SpiderService {
 		int count = 0;
 		for (Map friend : allFriends) {
 			try {
+				this.get_photo(gtk,friend,userQq,cookie);
 				Thread.sleep(4000);
 				String qq = String.valueOf(friend.get("uin"));
-				this.saveAndPush(QqLog.SUCCESS(String.valueOf(qq), "开始爬取qq：" + qq + ",姓名：" + friend.get("name") + "的好友信息"));
+				String friendName = String.valueOf(friend.get("name"));
+				QqFriends qqFriends = new QqFriends();
+				qqFriends.setCreateTime(new Date());
+				qqFriends.setFriendQq(qq);
+				qqFriends.setFriendName(friendName);
+				friendsService.save(qqFriends);
+				this.saveAndPush(QqLog.SUCCESS(String.valueOf(qq), "开始爬取qq：" + qq + ",姓名：" + friendName + "的好友信息"));
 				String url = "https://h5.qzone.qq.com/proxy/domain/taotao.qq.com/cgi-bin/emotion_cgi_msglist_v6?uin=" + qq + "&inCharset=utf-8&outCharset=utf-8&hostUin='+str(qq)+'&notice=0&sort=0&pos=0&num=20&cgi_host=http://taotao.qq.com/cgi-bin/emotion_cgi_msglist_v6&code_version=1&format=jsonp&need_private_comment=1&g_tk=" + gtk + "&qzonetoken=" + token;
 				this.saveAndPush(QqLog.SUCCESS(String.valueOf(qq), "url地址:" + url));
 				String response = QzoneUtil.get_response(url, cookie);
@@ -155,7 +168,7 @@ public class SpiderServiceImpl implements SpiderService {
 				JSONObject jsonObject = JSONObject.parseObject(sub);
 				Object message = jsonObject.get("message");
 				if (message == null || message == "") {
-					this.saveAndPush(QqLog.SUCCESS(String.valueOf(qq), "好友qq：" + qq + ",姓名：" + friend.get("name") + "的信息，暂无权限查看"));
+					this.saveAndPush(QqLog.SUCCESS(String.valueOf(qq), "好友qq：" + qq + ",姓名：" + friendName + "的信息，暂无权限查看"));
 					continue;
 				}
 				Object total = jsonObject.get("total");
@@ -357,6 +370,89 @@ public class SpiderServiceImpl implements SpiderService {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 			return;
+		}
+	}
+
+
+	/**
+	 * 爬取好友相册
+	 * @param gtk
+	 * @param friendMap
+	 * @param qq
+	 * @param cookie
+	 */
+	public  void get_photo(int gtk,Map friendMap,String qq,Map cookie){
+		try {
+			String friendName = (String) friendMap.get("name");
+			Integer friendQq = (Integer) friendMap.get("uin");
+			String url = "https://user.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/fcg_list_album_v3?g_tk="+gtk+"&callback=shine0_Callback&t=469158111&hostUin="+friendQq+"&uin="+qq+"&appid=4&inCharset=utf-8&outCharset=utf-8&source=qzone&plat=qzone&format=jsonp&notice=0&filter=1&handset=4&pageNumModeSort=40&pageNumModeClass=15&needUserInfo=1&idcNum=4&callbackFun=shine0&_=1600913159677";
+			String albumText = QzoneUtil.get_response(url, cookie);
+			//截取字符串获取正确的json数据
+			String sub = StrUtil.sub(albumText, albumText.indexOf("(")+1, albumText.lastIndexOf(")"));
+			JSONObject albumJson = JSON.parseObject(sub);
+			JSONObject data = (JSONObject) albumJson.get("data");
+			//得到相册的json数据
+			JSONArray albumListModeSort = (JSONArray) data.get("albumListModeSort");
+			//遍历相册
+			for (int i = 0; i < albumListModeSort.size(); i++) {
+				JSONObject album = (JSONObject) albumListModeSort.get(i);
+				Object topicId = album.get("id");
+				//拿到相册名，如果相册名为空就拿描述，两者必定有一个值
+				String name = String.valueOf(album.get("name"));
+				if (name == null || "".equals(name)) {
+					name = String.valueOf(album.get("desc"));
+				}
+				//此相册的照片数量
+				String total = String.valueOf(album.get("total"));
+				int pageStart = 0;
+				int pageNum = Integer.valueOf(total);
+				//获取照片的json数据
+				String url2="https://h5.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/cgi_list_photo?g_tk="+gtk+"&callback=shine0_Callback&t=952444063&mode=0&idcNum=4&hostUin="+friendQq+"&topicId="+topicId+"&noTopic=0&uin="+qq+"&pageStart="+pageStart+"&pageNum="+pageNum+"&skipCmtCount=0&singleurl=1&batchId=&notice=0&appid=4&inCharset=utf-8&outCharset=utf-8&source=qzone&plat=qzone&outstyle=json&format=jsonp&json_esc=1&question=&answer=&callbackFun=shine0&_=1551790719497";
+				String photoText = QzoneUtil.get_response(url2, cookie);
+				//截取获取正确的json数据
+				String sub2 = StrUtil.sub(photoText, photoText.indexOf("(")+1, photoText.lastIndexOf(")"));
+				JSONObject jsonObject2 = JSONObject.parseObject(sub2);
+				JSONObject data2 = (JSONObject) jsonObject2.get("data");
+				JSONArray  photoList = (JSONArray) data2.get("photoList");
+				//存库
+				QqPhotoAlbum qqPhotoAlbum = new QqPhotoAlbum();
+				qqPhotoAlbum.setAlbumName(name);
+				qqPhotoAlbum.setCreateTime(new Date());
+				qqPhotoAlbum.setDesc(String.valueOf(album.get("desc")));
+				qqPhotoAlbum.setPreUrl(String.valueOf(album.get("pre")));
+				qqPhotoAlbum.setTotal(total);
+				qqPhotoAlbum.setFriendName(friendName);
+				qqPhotoAlbum.setFriendQq(String.valueOf(friendQq));
+				//这里拿到的系统毫秒值有问题
+				Integer createtime = Integer.valueOf(String.valueOf(album.get("createtime")));
+				Date date = new Date();
+				date.setTime(createtime);
+				qqPhotoAlbum.setUploadTime(date);
+				photoAlbumService.save(qqPhotoAlbum);
+				//遍历照片列表
+				for (int j = 0; j < photoList.size(); j++) {
+					JSONObject photo = (JSONObject) photoList.get(j);
+					Object url1 = photo.get("url");
+					String path = name + "-" + UUID.randomUUID();
+					Object desc = photo.get("desc");
+					Object uploadtime = photo.get("uploadtime");
+					//存库
+					QqPhoto qqPhoto = new QqPhoto();
+					qqPhoto.setCreateTime(new Date());
+					qqPhoto.setDesc(String.valueOf(desc));
+					qqPhoto.setName(name);
+					qqPhoto.setPhotoAlbum(name);
+					qqPhoto.setPhotoAlbumId(qqPhotoAlbum.getId());
+					qqPhoto.setUploadTime(String.valueOf(uploadtime));
+					qqPhoto.setUrl(String.valueOf(url1));
+					String localUrl = QzoneUtil.download(String.valueOf(url1), friendMap);
+					qqPhoto.setLocalUrl(localUrl);
+					photoService.save(qqPhoto);
+				}
+
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 }

@@ -4,6 +4,7 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ReUtil;
+import cn.hutool.http.server.HttpServerRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -12,6 +13,7 @@ import org.openqa.selenium.Cookie;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -66,7 +68,7 @@ public class QzoneUtil {
 			String path = null;
 			String s = IdUtil.randomUUID();
 			String name = (String) friendMap.get("name");
-			Integer uin = (Integer) friendMap.get("uin");
+			Object uin = friendMap.get("uin");
 			if (url.contains("video")) {
 				path = dir +name +uin + "/" + s + ".mp4";
 				localPath = name + uin + "/" + s + ".mp4";
@@ -201,7 +203,7 @@ public class QzoneUtil {
 		headersMap.put("accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
 		headersMap.put("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:60.0) Gecko/20100101 Firefox/60.0");
 		headersMap.put("connection", "keep-alive");
-		Document document = connect.userAgent("Mozilla").cookies(cookie).headers(headersMap).get();
+		Document document = connect.userAgent("Mozilla").cookies(cookie).headers(headersMap).ignoreContentType(true).get();
 		return document.text();
 	}
 

@@ -11,5 +11,11 @@ spring:
     port: 5672
     username: muyahai
     password: muyahai
+    listener:
+      simple:
+        acknowledge-mode: none
 server:
   port: 8888
+logging:
+  level:
+    com.cn.selenium.spider.mapper : debug

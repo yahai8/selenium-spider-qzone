@@ -35,8 +35,8 @@ public class QqLogController {
 	 * @param pageSize
 	 * @return
 	 */
-	@PostMapping("/list")
-	public Result list(@RequestBody QqLog qqLog,
+	@GetMapping("/list")
+	public Result list(QqLog qqLog,
 					   @RequestParam(name = "pageNum", defaultValue = "1") Integer pageNum,
 					   @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize) {
 		try {

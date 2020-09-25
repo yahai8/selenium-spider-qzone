@@ -37,8 +37,8 @@ public class QqSourceController {
 	 * @param pageSize
 	 * @return
 	 */
-	@PostMapping("/list")
-	public Result list(@RequestBody QqSource  qqSource,
+	@GetMapping("/list")
+	public Result list(QqSource  qqSource,
 					   @RequestParam(name = "pageNum", defaultValue = "1") Integer pageNum,
 					   @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize) {
 		try {

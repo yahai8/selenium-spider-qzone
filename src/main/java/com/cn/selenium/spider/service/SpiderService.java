@@ -1,6 +1,9 @@
 package com.cn.selenium.spider.service;
 
+import com.cn.selenium.spider.mq.param.MqParam;
 import org.springframework.stereotype.Service;
+
+import java.util.Map;
 
 /**
  * @author: MuYaHai
@@ -8,5 +11,11 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public interface SpiderService {
-	public void loginQqZone(String qq,String pwd,String driverPath);
+	void loginQqZone(String qq, String pwd, String driverPath);
+
+	void get_photo(int gtk, Map friendMap, String qq, Map cookie);
+
+	int getFriendInfo(MqParam mqParam);
+
+	void getMsg(MqParam mqParam);
 }

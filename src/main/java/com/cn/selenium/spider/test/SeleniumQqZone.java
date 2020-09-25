@@ -10,7 +10,10 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.cn.selenium.spider.entity.QqMsg;
+import com.cn.selenium.spider.mq.param.MqParam;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -37,9 +40,7 @@ import java.util.regex.Pattern;
 @Slf4j
 public class SeleniumQqZone {
 	public static void main(String[] args) throws IOException {
-		Date date = new Date();
-		date.setTime(1551798059000L);
-		System.out.println(date);
+//		getMsgb();
 	}
 
 	private static void loginQqZone() {
@@ -459,6 +460,50 @@ public class SeleniumQqZone {
 				System.out.println(path+","+desc+","+uploadtime);
 			}
 
+		}
+	}
+
+
+	public static void getMsgb(MqParam mqParam) {
+		try {
+			String url ="https://user.qzone.qq.com/proxy/domain/m.qzone.qq.com/cgi-bin/new/get_msgb?uin="+mqParam.getQq()+"&hostUin="+mqParam.getFriendMap().get("uin")+"&start=0&s=0.4110685624024064&format=jsonp&num=10&inCharset=utf-8&outCharset=utf-8&g_tk="+mqParam.getGtk()+"&qzonetoken="+mqParam.getToken()+"&g_tk="+mqParam.getGtk();
+			String text = get_response(url, mqParam.getCookieMap());
+			String sub = StrUtil.sub(text, text.indexOf("(")+1, text.lastIndexOf(")"));
+			JSONObject jsonObject = JSON.parseObject(sub);
+			JSONObject data = (JSONObject) jsonObject.get("data");
+			int total = Integer.valueOf(String.valueOf(data.get("total")));
+			int page = 0;
+			if (total % 100 == 0) {
+				page = total / 100;
+			} else {
+				page = total / 100 + 1;
+			}
+			for (int i = 0; i < page; i++) {
+				int pageStart = i * 100;
+				url ="https://user.qzone.qq.com/proxy/domain/m.qzone.qq.com/cgi-bin/new/get_msgb?uin="+mqParam.getQq()+"&hostUin="+mqParam.getFriendMap().get("uin")+"&start="+pageStart+"&s=0.4110685624024064&format=jsonp&num=100&inCharset=utf-8&outCharset=utf-8&g_tk="+mqParam.getGtk()+"&qzonetoken="+mqParam.getToken()+"&g_tk="+mqParam.getGtk();
+				String text2 = get_response(url, mqParam.getCookieMap());
+				String sub2 = StrUtil.sub(text2, text2.indexOf("(")+1, text2.lastIndexOf(")"));
+				JSONObject jsonObject2 = JSON.parseObject(sub);
+				JSONObject data2 = (JSONObject) jsonObject.get("data");
+				JSONArray commentList = (JSONArray) data.get("commentList");
+				for (int j = 0; j < commentList.size(); j++) {
+					JSONObject obj = (JSONObject) commentList.get(j);
+					Object pubtime = obj.get("pubtime");
+					Object nickname = obj.get("nickname");
+					Object ubbContent = obj.get("ubbContent");
+					QqMsg qqMsg = new QqMsg();
+					qqMsg.setCreateTime(new Date());
+					qqMsg.setName(String.valueOf(mqParam.getFriendMap().get("name")));
+					qqMsg.setNickname(String.valueOf(nickname));
+					qqMsg.setPubTime(String.valueOf(pubtime));
+					qqMsg.setQq(String.valueOf(mqParam.getFriendMap().get("uin")));
+					qqMsg.setUbbContent(String.valueOf(ubbContent));
+
+					System.out.println(pubtime + "," + nickname + "," + ubbContent);
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 }

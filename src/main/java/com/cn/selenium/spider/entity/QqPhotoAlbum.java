@@ -43,7 +43,8 @@ public class QqPhotoAlbum implements Serializable {
     /**
      * 相册描述
      */
-    private String desc;
+    @TableField("album_desc")
+    private String albumDesc;
 
     /**
      * 封面图
@@ -65,5 +66,9 @@ public class QqPhotoAlbum implements Serializable {
 
     @TableField("friend_name")
     private String friendName;
+
+
+    @TableField("local_url")
+    private String localUrl;
 
 }

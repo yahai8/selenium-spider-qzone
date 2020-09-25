@@ -19,6 +19,12 @@ public class Result<T> {
 		return new Result().setMessage("操作成功！").setData(data).setCode(200);
 	}
 
+	public static <T> Result<T> SUCCESS(int code,T data) {
+		return new Result()
+				.setCode(code)
+				.setData(data);
+	}
+
 	public static <T> Result<T> SUCCESS(T data, String message) {
 		return new Result()
 				.setCode(200)

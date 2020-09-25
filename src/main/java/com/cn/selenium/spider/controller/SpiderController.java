@@ -4,7 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.cn.selenium.spider.entity.reponse.Result;
 import com.cn.selenium.spider.entity.request.RequestParams;
 import com.cn.selenium.spider.service.SpiderService;
-import com.cn.selenium.spider.service.impl.RabbitMqSender;
+import com.cn.selenium.spider.mq.RabbitMqSender;
 import com.cn.selenium.spider.socket.WebSocket;
 import org.springframework.web.bind.annotation.*;
 

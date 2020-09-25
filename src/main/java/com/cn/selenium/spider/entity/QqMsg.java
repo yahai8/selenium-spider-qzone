@@ -20,8 +20,8 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@TableName("qq_photo")
-public class QqPhoto implements Serializable {
+@TableName("qq_msg")
+public class QqMsg implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -29,44 +29,31 @@ public class QqPhoto implements Serializable {
     private Long id;
 
     /**
-     * 真实地址
+     * 留言时间
      */
-    private String url;
+    @TableField("pub_time")
+    private String pubTime;
 
     /**
-     * 本地地址
+     * 名称
      */
-    @TableField("local_url")
-    private String localUrl;
+    private String nickname;
 
     /**
-     * 名字腾讯官方保存的是时间
+     * 留言内容
+     */
+    @TableField("ubb_content")
+    private String ubbContent;
+
+    /**
+     * 好友名称
      */
     private String name;
 
     /**
-     * 图片描述
+     * 好友qq
      */
-    @TableField("photo_desc")
-    private String photoDesc;
-
-    /**
-     * 好友上传时间
-     */
-    @TableField("upload_time")
-    private String uploadTime;
-
-    /**
-     * 相册名
-     */
-    @TableField("photo_album")
-    private String photoAlbum;
-
-    /**
-     * 相册id
-     */
-    @TableField("photo_album_id")
-    private Long photoAlbumId;
+    private String qq;
 
     /**
      * 入库时间

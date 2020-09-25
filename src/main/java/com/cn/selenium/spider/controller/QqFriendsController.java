@@ -23,7 +23,7 @@ import java.util.List;
  */
 @Slf4j
 @RestController
-@RequestMapping("/friends")
+@RequestMapping("/friend")
 public class QqFriendsController {
 	@Resource
 	IQqFriendsService friendsService;
@@ -35,8 +35,8 @@ public class QqFriendsController {
 	 * @param pageSize
 	 * @return
 	 */
-	@PostMapping("/list")
-	public Result list(@RequestBody QqFriends qqFriends,
+	@GetMapping("/list")
+	public Result list(QqFriends qqFriends,
 					   @RequestParam(name = "pageNum", defaultValue = "1") Integer pageNum,
 					   @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize) {
 		try {

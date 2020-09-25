@@ -35,8 +35,8 @@ public class QqCommentController {
 	 * @param pageSize
 	 * @return
 	 */
-	@PostMapping("/list")
-	public Result list(@RequestBody QqComment qqComment,
+	@GetMapping("/list")
+	public Result list(QqComment qqComment,
 					   @RequestParam(name = "pageNum", defaultValue = "1") Integer pageNum,
 					   @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize) {
 		try {

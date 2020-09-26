@@ -70,7 +70,7 @@ public class QqLog implements Serializable {
 
     public static QqLog SUCCESS(String spiderQq, String message) {
         QqLog qqLog = new QqLog();
-        qqLog.setCreateTime(new Date());
+//        qqLog.setCreateTime(new Date());
         qqLog.setIsSuccess(0);
         qqLog.setSpiderQq(spiderQq);
         qqLog.setMessage(message);
@@ -79,7 +79,7 @@ public class QqLog implements Serializable {
 
     public static QqLog FAIL(String spiderQq,String exceptionContent,String message) {
         QqLog qqLog = new QqLog();
-        qqLog.setCreateTime(new Date());
+//        qqLog.setCreateTime(new Date());
         qqLog.setIsSuccess(1);
         qqLog.setSpiderQq(spiderQq);
         qqLog.setMessage(message);

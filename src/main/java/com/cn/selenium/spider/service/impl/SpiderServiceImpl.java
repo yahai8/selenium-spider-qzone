@@ -6,6 +6,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.cn.selenium.spider.entity.*;
 import com.cn.selenium.spider.mq.RabbitMqSender;
 import com.cn.selenium.spider.mq.param.MqParam;
@@ -128,6 +129,7 @@ public class SpiderServiceImpl implements SpiderService {
 			Map cookie = QzoneUtil.get_cookie(chromeDriver);
 			this.saveAndPush(QqLog.SUCCESS(null, "开始爬取信息"));
 			get_FriendInfo(QzoneUtil.get_g_tk(cookie), QzoneUtil.get_g_qZoneToken(chromeDriver.getPageSource()), cookie);
+			chromeDriver.close();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -164,16 +166,18 @@ public class SpiderServiceImpl implements SpiderService {
 	public int getFriendInfo(MqParam mqParam) {
 		int count = 0;
 		try {
-
 //			Thread.sleep(4000);
 			Map friend = mqParam.getFriendMap();
 			String qq = String.valueOf(friend.get("uin"));
 			String friendName = String.valueOf(friend.get("name"));
 			QqFriends qqFriends = new QqFriends();
-			qqFriends.setCreateTime(new Date());
 			qqFriends.setFriendQq(qq);
 			qqFriends.setFriendName(friendName);
-			friendsService.save(qqFriends);
+			QqFriends friends = friendsService.getOne(new QueryWrapper<>(qqFriends));
+			if (friends==null){
+				qqFriends.setCreateTime(new Date());
+				friendsService.save(qqFriends);
+			}
 			this.saveAndPush(QqLog.SUCCESS(String.valueOf(qq), "开始爬取qq：" + qq + ",姓名：" + friendName + "的好友信息"));
 			String url = "https://h5.qzone.qq.com/proxy/domain/taotao.qq.com/cgi-bin/emotion_cgi_msglist_v6?uin=" + qq + "&inCharset=utf-8&outCharset=utf-8&hostUin='+str(qq)+'&notice=0&sort=0&pos=0&num=20&cgi_host=http://taotao.qq.com/cgi-bin/emotion_cgi_msglist_v6&code_version=1&format=jsonp&need_private_comment=1&g_tk=" + mqParam.getGtk() + "&qzonetoken=" + mqParam.getToken();
 			this.saveAndPush(QqLog.SUCCESS(String.valueOf(qq), "url地址:" + url));
@@ -224,7 +228,10 @@ public class SpiderServiceImpl implements SpiderService {
 						Object createdTime = object.get("created_time");
 						qqArticle.setQqNum(userQq);
 						qqArticle.setFriendQq(qq);
-						qqArticleService.save(qqArticle);
+						QqArticle article = qqArticleService.getOne(new QueryWrapper<>(qqArticle));
+						if (article==null){
+							qqArticleService.save(qqArticle);
+						}
 						this.saveAndPush(QqLog.SUCCESS(String.valueOf(qq), "发布时间：" + createTime));
 //						Thread.sleep(2000);
 						//评论内容
@@ -260,7 +267,10 @@ public class SpiderServiceImpl implements SpiderService {
 								Object commentQQ = comment.get("uin");
 								qqComment.setQqNum(String.valueOf(commentQQ));
 								log.info("评论人qq号码：" + commentQQ);
-								qqCommentService.save(qqComment);
+								QqComment comment1 = qqCommentService.getOne(new QueryWrapper<>(qqComment));
+								if (comment1==null){
+									qqCommentService.save(qqComment);
+								}
 							}
 						} else {
 							this.saveAndPush(QqLog.SUCCESS(String.valueOf(qq), "暂无评论"));
@@ -282,9 +292,12 @@ public class SpiderServiceImpl implements SpiderService {
 								log.info("计数：" + absolutePosition);
 								this.saveAndPush(QqLog.SUCCESS(String.valueOf(qq), "照片地址：" + picId));
 								log.info("照片地址：" + picId);
-								String path = QzoneUtil.download(String.valueOf(picId), friend);
-								qqSource.setUrlLocal(path);
-								qqSourceService.save(qqSource);
+								QqSource source = qqSourceService.getOne(new QueryWrapper<>(qqSource));
+								if (source==null){
+									String path = QzoneUtil.download(String.valueOf(picId), friend);
+									qqSource.setUrlLocal(path);
+									qqSourceService.save(qqSource);
+								}
 							}
 						} else {
 							this.saveAndPush(QqLog.SUCCESS(String.valueOf(qq), "未发表照片"));
@@ -362,7 +375,10 @@ public class SpiderServiceImpl implements SpiderService {
 	 */
 	public void saveAndPush(QqLog qqLog) {
 		qqLog.setQq(userQq);
-		qqLogService.save(qqLog);
+		QqLog one = qqLogService.getOne(new QueryWrapper<>(qqLog));
+		if (one==null){
+			qqLogService.save(qqLog);
+		}
 		webSocket.sendAllMessage(qqLog.toString());
 		log.info(qqLog.toString());
 	}
@@ -376,7 +392,10 @@ public class SpiderServiceImpl implements SpiderService {
 	public void sleepLog(Integer time) {
 		QqLog qqLog = QqLog.SUCCESS(null, "睡眠" + time + "毫秒");
 		qqLog.setQq(userQq);
-		qqLogService.save(qqLog);
+		QqLog one = qqLogService.getOne(new QueryWrapper<>(qqLog));
+		if (one==null){
+			qqLogService.save(qqLog);
+		}
 		webSocket.sendAllMessage(qqLog.toString());
 		log.info(qqLog.toString());
 		try {
@@ -440,7 +459,6 @@ public class SpiderServiceImpl implements SpiderService {
 					//存库
 					QqPhotoAlbum qqPhotoAlbum = new QqPhotoAlbum();
 					qqPhotoAlbum.setAlbumName(name);
-					qqPhotoAlbum.setCreateTime(new Date());
 					qqPhotoAlbum.setAlbumDesc(String.valueOf(album.get("desc")));
 					qqPhotoAlbum.setPreUrl(String.valueOf(album.get("pre")));
 					String pathPre = QzoneUtil.download(String.valueOf(album.get("pre")), friendMap);
@@ -453,6 +471,11 @@ public class SpiderServiceImpl implements SpiderService {
 					Date date = new Date();
 					date.setTime(createtime);
 					qqPhotoAlbum.setUploadTime(date);
+					QqPhotoAlbum photoAlbum = photoAlbumService.getOne(new QueryWrapper<>(qqPhotoAlbum));
+					if (photoAlbum!=null){
+						continue;
+					}
+					qqPhotoAlbum.setCreateTime(new Date());
 					photoAlbumService.save(qqPhotoAlbum);
 					//遍历照片列表
 					if (photoList.size() > 0 && photoList != null) {
@@ -464,7 +487,6 @@ public class SpiderServiceImpl implements SpiderService {
 							Object uploadtime = photo.get("uploadtime");
 							//存库
 							QqPhoto qqPhoto = new QqPhoto();
-							qqPhoto.setCreateTime(new Date());
 							qqPhoto.setPhotoDesc(String.valueOf(desc));
 							qqPhoto.setName(name);
 							qqPhoto.setPhotoAlbum(name);
@@ -473,7 +495,11 @@ public class SpiderServiceImpl implements SpiderService {
 							qqPhoto.setUrl(String.valueOf(url1));
 							String localUrl = QzoneUtil.download(String.valueOf(url1), friendMap);
 							qqPhoto.setLocalUrl(localUrl);
-							photoService.save(qqPhoto);
+							QqPhoto photo1 = photoService.getOne(new QueryWrapper<>(qqPhoto));
+							if (photo1==null){
+								qqPhoto.setCreateTime(new Date());
+								photoService.save(qqPhoto);
+							}
 						}
 					}
 
@@ -526,12 +552,16 @@ public class SpiderServiceImpl implements SpiderService {
 						Object nickname = obj.get("nickname");
 						Object ubbContent = obj.get("ubbContent");
 						QqMsg qqMsg = new QqMsg();
-						qqMsg.setCreateTime(new Date());
 						qqMsg.setName(String.valueOf(mqParam.getFriendMap().get("name")));
 						qqMsg.setNickname(String.valueOf(nickname));
 						qqMsg.setPubTime(String.valueOf(pubtime));
 						qqMsg.setQq(String.valueOf(mqParam.getFriendMap().get("uin")));
 						qqMsg.setUbbContent(String.valueOf(ubbContent));
+						QqMsg msg = msgService.getOne(new QueryWrapper<>(qqMsg));
+						if (msg!=null){
+							continue;
+						}
+						qqMsg.setCreateTime(new Date());
 						msgService.save(qqMsg);
 					}
 				}

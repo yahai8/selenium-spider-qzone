@@ -1,12 +1,22 @@
 package com.cn.selenium.spider.test;
 
+import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.cn.selenium.spider.entity.QqPhoto;
+import com.cn.selenium.spider.entity.QqPhotoAlbum;
+import com.cn.selenium.spider.service.IQqPhotoService;
+import com.cn.selenium.spider.util.QzoneUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+import java.io.IOException;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -17,7 +27,10 @@ import java.util.regex.Pattern;
  * Date: 2020/9/17, Time: 13:52
  */
 @Slf4j
+@Component
 public class Test {
+	@Autowired
+	IQqPhotoService photoService;
 	public static void main(String[] args) {
 		String str = "<html>\n" +
 				" <head></head>\n" +
@@ -41,7 +54,7 @@ public class Test {
 		String suffix = StrUtil.removeSuffix(buffer.toString(), ",");
 //		buffer.append("]");
 //		HashMap hashMap = JSONUtil.toBean(suffix , HashMap.class);
-		JSONArray jsonArray = JSON.parseArray(suffix+"]");
+		JSONArray jsonArray = JSON.parseArray(suffix + "]");
 //		Map map = JSON.parseObject(suffix + "]", Map.class);
 		cn.hutool.json.JSONArray jsonArray1 = JSONUtil.parseArray(suffix + "]");
 		List<Map> mapList = JSONUtil.toList(jsonArray1, Map.class);
@@ -295,7 +308,7 @@ public class Test {
 				"\t\t\t\t\"uin\": 1525850359,\n" +
 				"\t\t\t\t\"wbid\": 0\n" +
 				"\t\t\t}]});";
-		String sub = StrUtil.sub(text, text.indexOf("(")+1, text.lastIndexOf(")"));
+		String sub = StrUtil.sub(text, text.indexOf("(") + 1, text.lastIndexOf(")"));
 		JSONObject jsonObject = JSONObject.parseObject(sub);
 		//总说说内容
 		JSONArray msglist = (JSONArray) jsonObject.get("msglist");
@@ -310,8 +323,8 @@ public class Test {
 				Object createTime = object.get("createTime");
 				//时间戳
 				Object createdTime = object.get("created_time");
-				log.info("发布时间："+createTime);
-				log.info("发布内容:"+content);
+				log.info("发布时间：" + createTime);
+				log.info("发布内容:" + content);
 				//评论内容
 				JSONArray commentlist = (JSONArray) object.get("commentlist");
 				log.info("=======================评论内容开始======================");
@@ -321,20 +334,20 @@ public class Test {
 						JSONObject comment = (JSONObject) commentlist.get(i);
 						//评论人姓名
 						Object commentName = comment.get("name");
-						log.info("评论人姓名："+commentName);
+						log.info("评论人姓名：" + commentName);
 						//评论内容
 						Object commentContent = comment.get("content");
-						log.info("评论内容："+commentContent);
+						log.info("评论内容：" + commentContent);
 						//含中文时间
 						Object commentTime = comment.get("createTime");
 						//全数字
 						Object commentTime2 = comment.get("createTime2");
 						//时间戳
 						Object commentTime3 = comment.get("create_time");
-						log.info("评论时间："+commentTime3);
+						log.info("评论时间：" + commentTime3);
 						//评论人qq
 						Object commentQQ = comment.get("uin");
-						log.info("评论人qq号码："+commentQQ);
+						log.info("评论人qq号码：" + commentQQ);
 					}
 				}
 				log.info("=======================评论内容结束======================");
@@ -346,7 +359,7 @@ public class Test {
 						//获取照片
 						Object picId = picElement.get("pic_id");
 						Object absolutePosition = picElement.get("absolute_position");
-						log.info("计数："+absolutePosition);
+						log.info("计数：" + absolutePosition);
 						log.info("照片地址：" + picId);
 					}
 				}
@@ -356,13 +369,99 @@ public class Test {
 					for (int j = 0; j < videoList.size(); j++) {
 						JSONObject video = (JSONObject) videoList.get(j);
 						Object url3 = video.get("url3");
-						log.info("视频地址："+url3);
+						log.info("视频地址：" + url3);
 					}
 				}
 			}
 		}
 	}
 
+	public static void test1(int gtk, Map friendMap, String qq, Map cookie) {
+		try {
+			String friendName = (String) friendMap.get("name");
+			Object friendQq = friendMap.get("uin");
+			String url = "https://user.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/fcg_list_album_v3?g_tk=" + gtk + "&callback=shine0_Callback&t=469158111&hostUin=" + friendQq + "&uin=" + qq + "&appid=4&inCharset=utf-8&outCharset=utf-8&source=qzone&plat=qzone&format=jsonp&notice=0&filter=1&handset=4&pageNumModeSort=40&pageNumModeClass=15&needUserInfo=1&idcNum=4&callbackFun=shine0&_=1600913159677";
+			String albumText = QzoneUtil.get_response(url, cookie);
+			//截取字符串获取正确的json数据
+			String sub = StrUtil.sub(albumText, albumText.indexOf("(") + 1, albumText.lastIndexOf(")"));
+			JSONObject albumJson = JSON.parseObject(sub);
+			JSONObject data = (JSONObject) albumJson.get("data");
+			//得到相册的json数据
+			JSONArray albumListModeSort = (JSONArray) data.get("albumListModeSort");
+			String message = String.valueOf(albumJson.get("message"));
+			if (message != null && !"".equals(message)) {
+				return;
+			}
+			//遍历相册
+			if (albumListModeSort != null && albumListModeSort.size() > 0) {
+				for (int i = 0; i < albumListModeSort.size(); i++) {
+					JSONObject album = (JSONObject) albumListModeSort.get(i);
+					Object topicId = album.get("id");
+					//拿到相册名，如果相册名为空就拿描述，两者必定有一个值
+					String name = String.valueOf(album.get("name"));
+					if (name == null || "".equals(name)) {
+						name = String.valueOf(album.get("desc"));
+					}
+					//此相册的照片数量
+					Integer total = Integer.valueOf(String.valueOf(album.get("total")));
+					if (total == null) {
+						total = 0;
+					}
+					int pageStart = 0;
+					int pageNum = Integer.valueOf(total);
+					//获取照片的json数据
+					String url2 = "https://h5.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/cgi_list_photo?g_tk=" + gtk + "&callback=shine0_Callback&t=952444063&mode=0&idcNum=4&hostUin=" + friendQq + "&topicId=" + topicId + "&noTopic=0&uin=" + qq + "&pageStart=" + pageStart + "&pageNum=" + pageNum + "&skipCmtCount=0&singleurl=1&batchId=&notice=0&appid=4&inCharset=utf-8&outCharset=utf-8&source=qzone&plat=qzone&outstyle=json&format=jsonp&json_esc=1&question=&answer=&callbackFun=shine0&_=1551790719497";
+					String photoText = QzoneUtil.get_response(url2, cookie);
+					//截取获取正确的json数据
+					String sub2 = StrUtil.sub(photoText, photoText.indexOf("(") + 1, photoText.lastIndexOf(")"));
+					JSONObject jsonObject2 = JSONObject.parseObject(sub2);
+					JSONObject data2 = (JSONObject) jsonObject2.get("data");
+					JSONArray photoList = (JSONArray) data2.get("photoList");
+					//存库
+					QqPhotoAlbum qqPhotoAlbum = new QqPhotoAlbum();
+					qqPhotoAlbum.setAlbumName(name);
+					qqPhotoAlbum.setCreateTime(new Date());
+					qqPhotoAlbum.setAlbumDesc(String.valueOf(album.get("desc")));
+					qqPhotoAlbum.setPreUrl(String.valueOf(album.get("pre")));
+					String pathPre = QzoneUtil.download(String.valueOf(album.get("pre")), friendMap);
+					qqPhotoAlbum.setLocalUrl(pathPre);
+					qqPhotoAlbum.setTotal(String.valueOf(total));
+					qqPhotoAlbum.setFriendName(friendName);
+					qqPhotoAlbum.setFriendQq(String.valueOf(friendQq));
+					//这里拿到的系统毫秒值有问题
+					Integer createtime = Integer.valueOf(String.valueOf(album.get("createtime")));
+					Date date = new Date();
+					date.setTime(createtime);
+					qqPhotoAlbum.setUploadTime(date);
+//				photoAlbumService.save(qqPhotoAlbum);
+					//遍历照片列表
+					if (photoList.size() > 0 && photoList != null) {
+						for (int j = 0; j < photoList.size(); j++) {
+							JSONObject photo = (JSONObject) photoList.get(j);
+							Object url1 = photo.get("url");
+							String path = name + "-" + UUID.randomUUID();
+							Object desc = photo.get("desc");
+							Object uploadtime = photo.get("uploadtime");
+							//存库
+							QqPhoto qqPhoto = new QqPhoto();
+							qqPhoto.setCreateTime(new Date());
+							qqPhoto.setPhotoDesc(String.valueOf(desc));
+							qqPhoto.setName(name);
+							qqPhoto.setPhotoAlbum(name);
+							qqPhoto.setPhotoAlbumId(qqPhotoAlbum.getId());
+							qqPhoto.setUploadTime(String.valueOf(uploadtime));
+							qqPhoto.setUrl(String.valueOf(url1));
+							String localUrl = QzoneUtil.download(String.valueOf(url1), friendMap);
+							qqPhoto.setLocalUrl(localUrl);
+//						photoService.save(qqPhoto);
+						}
+					}
 
-
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 }
+

@@ -1,5 +1,8 @@
 package com.cn.selenium.spider.test;
 
+import cn.hutool.core.date.DateField;
+import cn.hutool.core.date.DateTime;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.lang.UUID;
@@ -17,6 +20,8 @@ import lombok.val;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Cookie;
 import org.openqa.selenium.WebElement;
@@ -41,6 +46,17 @@ import java.util.regex.Pattern;
 public class SeleniumQqZone {
 	public static void main(String[] args) throws IOException {
 //		getMsgb();
+/*		Calendar calendar = DateUtil.calendar(1594907959000L);
+		DateTime dateTime = DateUtil.parse("2017-01-28 00:05:40");
+		System.out.println(dateTime.getField(DateField.MONTH));
+		System.out.println(dateTime);
+		System.out.println(calendar.get(Calendar.YEAR));
+		System.out.println(calendar.get(Calendar.MONTH));
+		System.out.println(calendar.get(Calendar.DAY_OF_MONTH));
+		Date date = new Date(1594907959000L);
+		String format = DateUtil.format(date, "yyyy-MM-dd HH:mm:ss");
+		System.out.println(format);*/
+		getProxy();
 	}
 
 	private static void loginQqZone() {
@@ -505,5 +521,13 @@ public class SeleniumQqZone {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+
+	public static void getProxy() throws IOException {
+		Document document = Jsoup.connect("http://free-proxy.cz/zh/proxylist/country/CN/all/ping/all/").get();
+		Element elementById = document.getElementById("proxy_list");
+		Elements elements = elementById.getElementsByTag("<tbody>");
+		System.out.println(elements);
 	}
 }

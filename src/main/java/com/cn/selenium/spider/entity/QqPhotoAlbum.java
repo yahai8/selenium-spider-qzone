@@ -71,4 +71,12 @@ public class QqPhotoAlbum implements Serializable {
     @TableField("local_url")
     private String localUrl;
 
+    private Integer year;
+
+    private Integer month;
+
+    private Integer day;
+
+    @TableField("detail_time")
+    private String detailTime;
 }

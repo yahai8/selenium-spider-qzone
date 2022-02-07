@@ -15,6 +15,7 @@ public class RabbitConfig {
 	public static final String GET_FRIEND_MSG_QUEUE = "getMsg";
 	public static final String GET_FRIEND_INFO_QUEUE = "getFriendInfo";
 	public static final String GET_FRIEND_PHOTO_ALBUM_QUEUE = "getFriendPhotoAlbum";
+	public static final String TEST_QUEUE = "test";
 
 	@Bean
 	public Queue loginQqZone() {
@@ -34,5 +35,10 @@ public class RabbitConfig {
 	@Bean
 	public Queue getFriendPhotoAlbumQueue() {
 		return new Queue(GET_FRIEND_PHOTO_ALBUM_QUEUE);
+	}
+
+	@Bean
+	Queue testMq() {
+		return new Queue(TEST_QUEUE);
 	}
 }

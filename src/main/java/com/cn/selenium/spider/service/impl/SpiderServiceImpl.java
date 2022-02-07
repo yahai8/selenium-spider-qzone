@@ -1,5 +1,8 @@
 package com.cn.selenium.spider.service.impl;
 
+import cn.hutool.core.date.DateField;
+import cn.hutool.core.date.DateTime;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -21,6 +24,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -64,7 +68,7 @@ public class SpiderServiceImpl implements SpiderService {
 	 * @param pwd
 	 */
 	@Override
-	public void loginQqZone(String qq, String pwd, String driverPath) {
+	public void loginQqZone(String qq, String pwd, String driverPath, List<String> typeList) {
 		userQq = qq;
 		System.setProperty("webdriver.chrome.driver", driverPath);
 		ChromeDriver chromeDriver = new ChromeDriver();
@@ -128,7 +132,7 @@ public class SpiderServiceImpl implements SpiderService {
 			Thread.sleep(2000);
 			Map cookie = QzoneUtil.get_cookie(chromeDriver);
 			this.saveAndPush(QqLog.SUCCESS(null, "开始爬取信息"));
-			get_FriendInfo(QzoneUtil.get_g_tk(cookie), QzoneUtil.get_g_qZoneToken(chromeDriver.getPageSource()), cookie);
+			get_FriendInfo(QzoneUtil.get_g_tk(cookie), QzoneUtil.get_g_qZoneToken(chromeDriver.getPageSource()), cookie, typeList);
 			chromeDriver.close();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
@@ -147,7 +151,7 @@ public class SpiderServiceImpl implements SpiderService {
 	 * @param cookie
 	 * @throws IOException
 	 */
-	public void get_FriendInfo(int gtk, String token, Map cookie) throws IOException {
+	public void get_FriendInfo(int gtk, String token, Map cookie, List<String> typeList) throws IOException {
 		List<Map> allFriends = get_AllFriends(gtk, token, cookie);
 		int count = 0;
 		MqParam mqParam = new MqParam();
@@ -157,9 +161,17 @@ public class SpiderServiceImpl implements SpiderService {
 		mqParam.setQq(userQq);
 		for (Map friend : allFriends) {
 			mqParam.setFriendMap(friend);
-			rabbitMqSender.sendToGetInfo(JSON.toJSONString(mqParam));
+			if (typeList.contains("说说")) {
+				rabbitMqSender.sendToGetInfo(JSON.toJSONString(mqParam));
+			} else if (typeList.contains("相册")) {
+				rabbitMqSender.sendToPhoto(JSON.toJSONString(mqParam));
+			} else if (typeList.contains("留言")) {
+				rabbitMqSender.sendGetMsg(JSON.toJSONString(mqParam));
+			} else{
+				rabbitMqSender.sendToGetInfo(JSON.toJSONString(mqParam));
+			}
 		}
-		this.saveAndPush(QqLog.SUCCESS(null, "爬取空间好友说说结束，共爬取" + allFriends.size() + "个好友" + count + "条数据"));
+//		this.saveAndPush(QqLog.SUCCESS(null, "爬取空间好友说说结束，共爬取" + allFriends.size() + "个好友" + count + "条数据"));
 	}
 
 	@Override
@@ -174,7 +186,7 @@ public class SpiderServiceImpl implements SpiderService {
 			qqFriends.setFriendQq(qq);
 			qqFriends.setFriendName(friendName);
 			QqFriends friends = friendsService.getOne(new QueryWrapper<>(qqFriends));
-			if (friends==null){
+			if (friends == null) {
 				qqFriends.setCreateTime(new Date());
 				friendsService.save(qqFriends);
 			}
@@ -188,8 +200,8 @@ public class SpiderServiceImpl implements SpiderService {
 			if (message != null && !"".equals(message)) {
 				return count;
 			}
-			rabbitMqSender.sendGetMsg(JSON.toJSONString(mqParam));
-			rabbitMqSender.sendToPhoto(JSON.toJSONString(mqParam));
+//			rabbitMqSender.sendGetMsg(JSON.toJSONString(mqParam));
+//			rabbitMqSender.sendToPhoto(JSON.toJSONString(mqParam));
 			Object total = jsonObject.get("total");
 			Integer value = Integer.valueOf(String.valueOf(total));
 			int page = 0;
@@ -225,11 +237,17 @@ public class SpiderServiceImpl implements SpiderService {
 						Object createTime = object.get("createTime");
 						qqArticle.setCreateTime((String) createTime);
 						//时间戳
-						Object createdTime = object.get("created_time");
+						String createdTime = String.valueOf(object.get("created_time")) + "000";
+						Calendar calendar = DateUtil.calendar(Long.valueOf(createdTime));
+						qqArticle.setYear(calendar.get(Calendar.YEAR));
+						qqArticle.setMonth(calendar.get(Calendar.MONTH) + 1);
+						qqArticle.setDay(calendar.get(Calendar.DAY_OF_MONTH));
+						String format = DateUtil.format(calendar.getTime(), "HH:mm:ss");
+						qqArticle.setDetailTime(format);
 						qqArticle.setQqNum(userQq);
 						qqArticle.setFriendQq(qq);
 						QqArticle article = qqArticleService.getOne(new QueryWrapper<>(qqArticle));
-						if (article==null){
+						if (article == null) {
 							qqArticleService.save(qqArticle);
 						}
 						this.saveAndPush(QqLog.SUCCESS(String.valueOf(qq), "发布时间：" + createTime));
@@ -267,8 +285,17 @@ public class SpiderServiceImpl implements SpiderService {
 								Object commentQQ = comment.get("uin");
 								qqComment.setQqNum(String.valueOf(commentQQ));
 								log.info("评论人qq号码：" + commentQQ);
+								Calendar commentCalendat = DateUtil.calendar(Long.valueOf(String.valueOf(commentTime3) + "000"));
+								int year = commentCalendat.get(Calendar.YEAR);
+								int month = commentCalendat.get(Calendar.MONTH) + 1;
+								int day = commentCalendat.get(Calendar.DAY_OF_MONTH);
+								String commentFormat = DateUtil.format(commentCalendat.getTime(), "HH:mm:ss");
+								qqComment.setYear(year);
+								qqComment.setMonth(month);
+								qqComment.setDay(day);
+								qqComment.setDetailTime(commentFormat);
 								QqComment comment1 = qqCommentService.getOne(new QueryWrapper<>(qqComment));
-								if (comment1==null){
+								if (comment1 == null) {
 									qqCommentService.save(qqComment);
 								}
 							}
@@ -293,7 +320,7 @@ public class SpiderServiceImpl implements SpiderService {
 								this.saveAndPush(QqLog.SUCCESS(String.valueOf(qq), "照片地址：" + picId));
 								log.info("照片地址：" + picId);
 								QqSource source = qqSourceService.getOne(new QueryWrapper<>(qqSource));
-								if (source==null){
+								if (source == null) {
 									String path = QzoneUtil.download(String.valueOf(picId), friend);
 									qqSource.setUrlLocal(path);
 									qqSourceService.save(qqSource);
@@ -376,7 +403,7 @@ public class SpiderServiceImpl implements SpiderService {
 	public void saveAndPush(QqLog qqLog) {
 		qqLog.setQq(userQq);
 		QqLog one = qqLogService.getOne(new QueryWrapper<>(qqLog));
-		if (one==null){
+		if (one == null) {
 			qqLogService.save(qqLog);
 		}
 		webSocket.sendAllMessage(qqLog.toString());
@@ -393,7 +420,7 @@ public class SpiderServiceImpl implements SpiderService {
 		QqLog qqLog = QqLog.SUCCESS(null, "睡眠" + time + "毫秒");
 		qqLog.setQq(userQq);
 		QqLog one = qqLogService.getOne(new QueryWrapper<>(qqLog));
-		if (one==null){
+		if (one == null) {
 			qqLogService.save(qqLog);
 		}
 		webSocket.sendAllMessage(qqLog.toString());
@@ -409,20 +436,21 @@ public class SpiderServiceImpl implements SpiderService {
 
 	/**
 	 * 爬取好友相册
+	 *
 	 * @param gtk
 	 * @param friendMap
 	 * @param qq
 	 * @param cookie
 	 */
 	@Override
-	public  void get_photo(int gtk, Map friendMap, String qq, Map cookie){
+	public void get_photo(int gtk, Map friendMap, String qq, Map cookie) {
 		try {
 			String friendName = (String) friendMap.get("name");
 			Object friendQq = friendMap.get("uin");
-			String url = "https://user.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/fcg_list_album_v3?g_tk="+gtk+"&callback=shine0_Callback&t=469158111&hostUin="+friendQq+"&uin="+qq+"&appid=4&inCharset=utf-8&outCharset=utf-8&source=qzone&plat=qzone&format=jsonp&notice=0&filter=1&handset=4&pageNumModeSort=40&pageNumModeClass=15&needUserInfo=1&idcNum=4&callbackFun=shine0&_=1600913159677";
+			String url = "https://user.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/fcg_list_album_v3?g_tk=" + gtk + "&callback=shine0_Callback&t=469158111&hostUin=" + friendQq + "&uin=" + qq + "&appid=4&inCharset=utf-8&outCharset=utf-8&source=qzone&plat=qzone&format=jsonp&notice=0&filter=1&handset=4&pageNumModeSort=40&pageNumModeClass=15&needUserInfo=1&idcNum=4&callbackFun=shine0&_=1600913159677";
 			String albumText = QzoneUtil.get_response(url, cookie);
 			//截取字符串获取正确的json数据
-			String sub = StrUtil.sub(albumText, albumText.indexOf("(")+1, albumText.lastIndexOf(")"));
+			String sub = StrUtil.sub(albumText, albumText.indexOf("(") + 1, albumText.lastIndexOf(")"));
 			JSONObject albumJson = JSON.parseObject(sub);
 			JSONObject data = (JSONObject) albumJson.get("data");
 			//得到相册的json数据
@@ -444,41 +472,51 @@ public class SpiderServiceImpl implements SpiderService {
 					//此相册的照片数量
 					Integer total = Integer.valueOf(String.valueOf(album.get("total")));
 					if (total == null) {
-						total=0;
+						total = 0;
 					}
 					int pageStart = 0;
 					int pageNum = Integer.valueOf(total);
 					//获取照片的json数据
-					String url2="https://h5.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/cgi_list_photo?g_tk="+gtk+"&callback=shine0_Callback&t=952444063&mode=0&idcNum=4&hostUin="+friendQq+"&topicId="+topicId+"&noTopic=0&uin="+qq+"&pageStart="+pageStart+"&pageNum="+pageNum+"&skipCmtCount=0&singleurl=1&batchId=&notice=0&appid=4&inCharset=utf-8&outCharset=utf-8&source=qzone&plat=qzone&outstyle=json&format=jsonp&json_esc=1&question=&answer=&callbackFun=shine0&_=1551790719497";
+					String url2 = "https://h5.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/cgi_list_photo?g_tk=" + gtk + "&callback=shine0_Callback&t=952444063&mode=0&idcNum=4&hostUin=" + friendQq + "&topicId=" + topicId + "&noTopic=0&uin=" + qq + "&pageStart=" + pageStart + "&pageNum=" + pageNum + "&skipCmtCount=0&singleurl=1&batchId=&notice=0&appid=4&inCharset=utf-8&outCharset=utf-8&source=qzone&plat=qzone&outstyle=json&format=jsonp&json_esc=1&question=&answer=&callbackFun=shine0&_=1551790719497";
 					String photoText = QzoneUtil.get_response(url2, cookie);
 					//截取获取正确的json数据
-					String sub2 = StrUtil.sub(photoText, photoText.indexOf("(")+1, photoText.lastIndexOf(")"));
+					String sub2 = StrUtil.sub(photoText, photoText.indexOf("(") + 1, photoText.lastIndexOf(")"));
 					JSONObject jsonObject2 = JSONObject.parseObject(sub2);
 					JSONObject data2 = (JSONObject) jsonObject2.get("data");
-					JSONArray  photoList = (JSONArray) data2.get("photoList");
+					JSONArray photoList = (JSONArray) data2.get("photoList");
 					//存库
 					QqPhotoAlbum qqPhotoAlbum = new QqPhotoAlbum();
 					qqPhotoAlbum.setAlbumName(name);
 					qqPhotoAlbum.setAlbumDesc(String.valueOf(album.get("desc")));
 					qqPhotoAlbum.setPreUrl(String.valueOf(album.get("pre")));
-					String pathPre = QzoneUtil.download(String.valueOf(album.get("pre")), friendMap);
-					qqPhotoAlbum.setLocalUrl(pathPre);
 					qqPhotoAlbum.setTotal(String.valueOf(total));
 					qqPhotoAlbum.setFriendName(friendName);
 					qqPhotoAlbum.setFriendQq(String.valueOf(friendQq));
 					//这里拿到的系统毫秒值有问题
-					Integer createtime = Integer.valueOf(String.valueOf(album.get("createtime")));
-					Date date = new Date();
-					date.setTime(createtime);
-					qqPhotoAlbum.setUploadTime(date);
+					String createtime = String.valueOf(album.get("createtime")) + "000";
+					Calendar commentCalendat = DateUtil.calendar(Long.valueOf(createtime));
+					int year = commentCalendat.get(Calendar.YEAR);
+					int month = commentCalendat.get(Calendar.MONTH) + 1;
+					int day = commentCalendat.get(Calendar.DAY_OF_MONTH);
+					String commentFormat = DateUtil.format(commentCalendat.getTime(), "HH:mm:ss");
+					qqPhotoAlbum.setYear(year);
+					qqPhotoAlbum.setMonth(month);
+					qqPhotoAlbum.setDay(day);
+					qqPhotoAlbum.setDetailTime(commentFormat);
+					qqPhotoAlbum.setUploadTime(commentCalendat.getTime());
 					QqPhotoAlbum photoAlbum = photoAlbumService.getOne(new QueryWrapper<>(qqPhotoAlbum));
-					if (photoAlbum!=null){
-						continue;
+					Long id = null;
+					if (photoAlbum == null) {
+						String pathPre = QzoneUtil.download(String.valueOf(album.get("pre")), friendMap);
+						qqPhotoAlbum.setLocalUrl(pathPre);
+						qqPhotoAlbum.setCreateTime(new Date());
+						photoAlbumService.save(qqPhotoAlbum);
+						id = qqPhotoAlbum.getId();
+					} else {
+						id = photoAlbum.getId();
 					}
-					qqPhotoAlbum.setCreateTime(new Date());
-					photoAlbumService.save(qqPhotoAlbum);
 					//遍历照片列表
-					if (photoList.size() > 0 && photoList != null) {
+					if (photoList != null && photoList.size() > 0) {
 						for (int j = 0; j < photoList.size(); j++) {
 							JSONObject photo = (JSONObject) photoList.get(j);
 							Object url1 = photo.get("url");
@@ -487,16 +525,22 @@ public class SpiderServiceImpl implements SpiderService {
 							Object uploadtime = photo.get("uploadtime");
 							//存库
 							QqPhoto qqPhoto = new QqPhoto();
+							DateTime dateTime = DateUtil.parse(String.valueOf(uploadtime));
+							qqPhoto.setYear(dateTime.getField(DateField.YEAR));
+							qqPhoto.setMonth(dateTime.getField(DateField.MONTH) + 1);
+							qqPhoto.setDay(dateTime.getField(DateField.DAY_OF_MONTH));
+							String format = DateUtil.format(dateTime, "HH:mm:ss");
+							qqPhoto.setDetailTime(format);
 							qqPhoto.setPhotoDesc(String.valueOf(desc));
 							qqPhoto.setName(name);
 							qqPhoto.setPhotoAlbum(name);
-							qqPhoto.setPhotoAlbumId(qqPhotoAlbum.getId());
+							qqPhoto.setPhotoAlbumId(id);
 							qqPhoto.setUploadTime(String.valueOf(uploadtime));
 							qqPhoto.setUrl(String.valueOf(url1));
-							String localUrl = QzoneUtil.download(String.valueOf(url1), friendMap);
-							qqPhoto.setLocalUrl(localUrl);
 							QqPhoto photo1 = photoService.getOne(new QueryWrapper<>(qqPhoto));
-							if (photo1==null){
+							if (photo1 == null) {
+								String localUrl = QzoneUtil.download(String.valueOf(url1), friendMap);
+								qqPhoto.setLocalUrl(localUrl);
 								qqPhoto.setCreateTime(new Date());
 								photoService.save(qqPhoto);
 							}
@@ -511,14 +555,13 @@ public class SpiderServiceImpl implements SpiderService {
 	}
 
 
-
 	@Override
-	public  void getMsg(MqParam mqParam) {
+	public void getMsg(MqParam mqParam) {
 		try {
-			this.saveAndPush(QqLog.SUCCESS(String.valueOf(mqParam.getFriendMap().get("uin")),"开始爬取留言信息"));
-			String url ="https://user.qzone.qq.com/proxy/domain/m.qzone.qq.com/cgi-bin/new/get_msgb?uin="+mqParam.getQq()+"&hostUin="+mqParam.getFriendMap().get("uin")+"&start=0&s=0.4110685624024064&format=jsonp&num=10&inCharset=utf-8&outCharset=utf-8&g_tk="+mqParam.getGtk()+"&qzonetoken="+mqParam.getToken()+"&g_tk="+mqParam.getGtk();
+			this.saveAndPush(QqLog.SUCCESS(String.valueOf(mqParam.getFriendMap().get("uin")), "开始爬取留言信息"));
+			String url = "https://user.qzone.qq.com/proxy/domain/m.qzone.qq.com/cgi-bin/new/get_msgb?uin=" + mqParam.getQq() + "&hostUin=" + mqParam.getFriendMap().get("uin") + "&start=0&s=0.4110685624024064&format=jsonp&num=10&inCharset=utf-8&outCharset=utf-8&g_tk=" + mqParam.getGtk() + "&qzonetoken=" + mqParam.getToken() + "&g_tk=" + mqParam.getGtk();
 			String text = QzoneUtil.get_response(url, mqParam.getCookieMap());
-			String sub = StrUtil.sub(text, text.indexOf("(")+1, text.lastIndexOf(")"));
+			String sub = StrUtil.sub(text, text.indexOf("(") + 1, text.lastIndexOf(")"));
 			JSONObject jsonObject = JSON.parseObject(sub);
 			JSONObject data = (JSONObject) jsonObject.get("data");
 			String value = String.valueOf(data.get("total"));
@@ -539,9 +582,9 @@ public class SpiderServiceImpl implements SpiderService {
 			for (int i = 0; i < page; i++) {
 //				this.sleepLog(2000);
 				int pageStart = i * 100;
-				url ="https://user.qzone.qq.com/proxy/domain/m.qzone.qq.com/cgi-bin/new/get_msgb?uin="+mqParam.getQq()+"&hostUin="+mqParam.getFriendMap().get("uin")+"&start="+pageStart+"&s=0.4110685624024064&format=jsonp&num=100&inCharset=utf-8&outCharset=utf-8&g_tk="+mqParam.getGtk()+"&qzonetoken="+mqParam.getToken()+"&g_tk="+mqParam.getGtk();
+				url = "https://user.qzone.qq.com/proxy/domain/m.qzone.qq.com/cgi-bin/new/get_msgb?uin=" + mqParam.getQq() + "&hostUin=" + mqParam.getFriendMap().get("uin") + "&start=" + pageStart + "&s=0.4110685624024064&format=jsonp&num=100&inCharset=utf-8&outCharset=utf-8&g_tk=" + mqParam.getGtk() + "&qzonetoken=" + mqParam.getToken() + "&g_tk=" + mqParam.getGtk();
 				String text2 = QzoneUtil.get_response(url, mqParam.getCookieMap());
-				String sub2 = StrUtil.sub(text2, text2.indexOf("(")+1, text2.lastIndexOf(")"));
+				String sub2 = StrUtil.sub(text2, text2.indexOf("(") + 1, text2.lastIndexOf(")"));
 				JSONObject jsonObject2 = JSON.parseObject(sub);
 				JSONObject data2 = (JSONObject) jsonObject.get("data");
 				JSONArray commentList = (JSONArray) data.get("commentList");
@@ -552,13 +595,19 @@ public class SpiderServiceImpl implements SpiderService {
 						Object nickname = obj.get("nickname");
 						Object ubbContent = obj.get("ubbContent");
 						QqMsg qqMsg = new QqMsg();
+						DateTime dateTime = DateUtil.parse(String.valueOf(pubtime));
+						qqMsg.setYear(dateTime.getField(DateField.YEAR));
+						qqMsg.setMonth(dateTime.getField(DateField.MONTH) + 1);
+						qqMsg.setDay(dateTime.getField(DateField.DAY_OF_MONTH));
+						String format = DateUtil.format(dateTime, "HH:mm:ss");
+						qqMsg.setDetailTime(format);
 						qqMsg.setName(String.valueOf(mqParam.getFriendMap().get("name")));
 						qqMsg.setNickname(String.valueOf(nickname));
 						qqMsg.setPubTime(String.valueOf(pubtime));
 						qqMsg.setQq(String.valueOf(mqParam.getFriendMap().get("uin")));
 						qqMsg.setUbbContent(String.valueOf(ubbContent));
 						QqMsg msg = msgService.getOne(new QueryWrapper<>(qqMsg));
-						if (msg!=null){
+						if (msg != null) {
 							continue;
 						}
 						qqMsg.setCreateTime(new Date());

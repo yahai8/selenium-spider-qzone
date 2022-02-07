@@ -1,3 +1,4 @@
+/*
 package com.cn.selenium.spider.test;
 
 import cn.hutool.core.lang.UUID;
@@ -6,6 +7,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.cn.selenium.spider.entity.QqArticle;
 import com.cn.selenium.spider.entity.QqPhoto;
 import com.cn.selenium.spider.entity.QqPhotoAlbum;
 import com.cn.selenium.spider.service.IQqPhotoService;
@@ -13,25 +15,32 @@ import com.cn.selenium.spider.util.QzoneUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.xhtmlrenderer.swing.Java2DRenderer;
+import org.xhtmlrenderer.util.FSImageWriter;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+*/
 /**
  * @author: MuYaHai
  * Date: 2020/9/17, Time: 13:52
- */
+ *//*
+
 @Slf4j
 @Component
 public class Test {
 	@Autowired
 	IQqPhotoService photoService;
-	public static void main(String[] args) {
+*/
+/*	public static void main(String[] args) {
 		String str = "<html>\n" +
 				" <head></head>\n" +
 				" <body>\n" +
@@ -462,6 +471,61 @@ public class Test {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+
+	}*//*
+
+
+	private int widthImage = 740;
+	private int heightImage = 795;
+
+	public void convertToImage() throws IOException {
+		final File f = new File("D:\\1.png");
+		final Java2DRenderer renderer = new Java2DRenderer(f, widthImage, heightImage);
+		final BufferedImage img = renderer.getImage();
+		final FSImageWriter imageWriter = new FSImageWriter();
+		imageWriter.setWriteCompressionQuality(0.9f);
+		imageWriter.write(img, outputFilename);
+		System.out.println("Done with rendering");
+
+	}
+
+	public static void main(final String[] args) throws Exception {
+		final XHTMLToImage renderer = new XHTMLToImage();
+		if (args.length != 2) {
+			renderer.inputFilename = "source.xhtml";
+			renderer.outputFilename = "out.png";
+			System.out.println("Usage : XHTMLToImage INPUTFILE.xhtml OUTPUTFILE.png <width> <height>");
+		} else {
+			renderer.inputFilename = args[0];
+			renderer.outputFilename = args[1];
+		}
+
+		if (args.length == 4) {
+			renderer.widthImage = 740 ;
+			renderer.heightImage = 790;
+		}
+		renderer.convertToImage();
+	}
+
+	private static void test(ArrayList<QqArticle> list) throws InterruptedException, ExecutionException {
+		List<QqArticle> result = new ArrayList<>();
+		ExecutorService service = MyThreadPool.getService();
+		ExecutorCompletionService executorCompletionService = new ExecutorCompletionService<ArrayList<QqArticle>>(service);
+		int f = 0;
+		int i = 0;
+		for (QqArticle qqArticle : list) {
+			MyThread myThread = new MyThread(1, Arrays.asList(qqArticle));
+			executorCompletionService.submit(myThread);
+		}
+		while (!service.isShutdown()) {
+			Object o = executorCompletionService.take().get();
+			System.out.println(o);
+//			result.add(o);
+		}
+		for (QqArticle qqArticle : result) {
+			System.out.println(qqArticle);
+		}
 	}
 }
 
+*/

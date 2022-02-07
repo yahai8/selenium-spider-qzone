@@ -5,6 +5,7 @@ import java.io.Serializable;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import io.swagger.models.auth.In;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -50,4 +51,14 @@ public class QqArticle implements Serializable {
 
     @TableField("friend_qq")
     private String friendQq;
+
+
+    private Integer year;
+
+    private Integer month;
+
+    private Integer day;
+
+    @TableField("detail_time")
+    private String detailTime;
 }

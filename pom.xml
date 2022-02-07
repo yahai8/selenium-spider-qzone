@@ -20,11 +20,153 @@
         <swagger-annotations.version>1.6.0</swagger-annotations.version>
     </properties>
 <dependencies>
+
+    <dependency>
+        <groupId>org.xhtmlrenderer</groupId>
+        <artifactId>core-renderer</artifactId>
+        <version>R8</version>
+    </dependency>
+    <dependency>
+        <groupId>com.belerweb</groupId>
+        <artifactId>pinyin4j</artifactId>
+        <version>2.5.1</version>
+    </dependency>
     <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-websocket</artifactId>
     </dependency>
-<!--     https://mvnrepository.com/artifact/com.baomidou/mybatis-plus-boot-starter -->
+    <!-- https://mvnrepository.com/artifact/org.bytedeco/ffmpeg-platform -->
+    <dependency>
+        <groupId>org.bytedeco</groupId>
+        <artifactId>ffmpeg-platform</artifactId>
+        <version>4.3.2-1.5.5</version>
+    </dependency>
+    <dependency>
+        <groupId>org.bytedeco</groupId>
+        <artifactId>javacv</artifactId>
+        <version>1.5.5</version>
+        <exclusions>
+            <exclusion>
+                <groupId>org.bytedeco</groupId>
+                <artifactId>openblas</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.bytedeco</groupId>
+                <artifactId>opencv</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.bytedeco</groupId>
+                <artifactId>flycapture</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.bytedeco</groupId>
+                <artifactId>libdc1394</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.bytedeco</groupId>
+                <artifactId>libfreenect</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.bytedeco</groupId>
+                <artifactId>libfreenect2</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.bytedeco</groupId>
+                <artifactId>librealsense</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.bytedeco</groupId>
+                <artifactId>librealsense2</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.bytedeco</groupId>
+                <artifactId>videoinput</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.bytedeco</groupId>
+                <artifactId>artoolkitplus</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.bytedeco</groupId>
+                <artifactId>flandmark</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.bytedeco</groupId>
+                <artifactId>leptonica</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.bytedeco</groupId>
+                <artifactId>tesseract</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+    <dependency>
+        <groupId>org.bytedeco</groupId>
+        <artifactId>javacv-platform</artifactId>
+        <version>1.5.5</version>
+        <exclusions>
+            <exclusion>
+                <groupId>org.bytedeco</groupId>
+                <artifactId>javacv</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.bytedeco</groupId>
+                <artifactId>openblas-platform</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.bytedeco</groupId>
+                <artifactId>flycapture-platform</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.bytedeco</groupId>
+                <artifactId>libdc1394-platform</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.bytedeco</groupId>
+                <artifactId>libfreenect-platform</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.bytedeco</groupId>
+                <artifactId>libfreenect2-platform</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.bytedeco</groupId>
+                <artifactId>librealsense-platform</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.bytedeco</groupId>
+                <artifactId>librealsense2-platform</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.bytedeco</groupId>
+                <artifactId>videoinput-platform</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.bytedeco</groupId>
+                <artifactId>opencv-platform</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.bytedeco</groupId>
+                <artifactId>tesseract-platform</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.bytedeco</groupId>
+                <artifactId>leptonica-platform</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.bytedeco</groupId>
+                <artifactId>flandmark-platform</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.bytedeco</groupId>
+                <artifactId>artoolkitplus-platform</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+
+
+
+    <!--     https://mvnrepository.com/artifact/com.baomidou/mybatis-plus-boot-starter -->
     <dependency>
         <groupId>com.baomidou</groupId>
         <artifactId>mybatis-plus-boot-starter</artifactId>
@@ -135,6 +277,12 @@
     <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-amqp</artifactId>
+    </dependency>
+
+    <dependency>
+        <groupId>commons-net</groupId>
+        <artifactId>commons-net</artifactId>
+        <version>3.1</version>
     </dependency>
 <!--        &lt;!&ndash; https://mvnrepository.com/artifact/com.google.code.gson/gson &ndash;&gt;
         <dependency>

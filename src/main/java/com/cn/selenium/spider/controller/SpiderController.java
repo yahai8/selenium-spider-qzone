@@ -25,6 +25,11 @@ public class SpiderController {
 	@Resource
 	RabbitMqSender rabbitMqSender;
 
+	/**
+	 * 爬取
+	 * @param requestParams
+	 * @return
+	 */
 	@RequestMapping("/run")
 	public Result spider(@RequestBody RequestParams requestParams) {
 		try {

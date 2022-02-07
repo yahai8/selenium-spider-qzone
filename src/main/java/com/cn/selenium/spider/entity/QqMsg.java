@@ -61,5 +61,12 @@ public class QqMsg implements Serializable {
     @TableField("create_time")
     private Date createTime;
 
+    private Integer year;
 
+    private Integer month;
+
+    private Integer day;
+
+    @TableField("detail_time")
+    private String detailTime;
 }

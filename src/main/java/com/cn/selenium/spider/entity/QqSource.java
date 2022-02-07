@@ -42,5 +42,12 @@ public class QqSource implements Serializable {
     @TableField("article_id")
     private Long articleId;
 
+    private Integer year;
 
+    private Integer month;
+
+    private Integer day;
+
+    @TableField("detail_time")
+    private String detailTime;
 }

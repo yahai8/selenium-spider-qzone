@@ -17,7 +17,9 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
+import java.net.Proxy;
 import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -29,8 +31,12 @@ import java.util.regex.Pattern;
  */
 @Slf4j
 public class QzoneUtil {
-	public static void main(String[] args) {
-		download(null, null);
+	public static void main(String[] args) throws IOException {
+		Connection connect = Jsoup.connect("https://www.baidu.com/");
+		Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("220.194.226.136", 3128));
+		Document document = connect.proxy(proxy).get();
+		System.out.println(document);
+		System.out.println(document);
 	}
 
 	/**

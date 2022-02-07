@@ -66,5 +66,12 @@ public class QqComment implements Serializable {
     @TableField("qq_num")
     private String qqNum;
 
+    private Integer year;
 
+    private Integer month;
+
+    private Integer day;
+
+    @TableField("detail_time")
+    private String detailTime;
 }

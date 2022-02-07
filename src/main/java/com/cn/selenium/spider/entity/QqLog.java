@@ -68,6 +68,15 @@ public class QqLog implements Serializable {
 
     private String message;
 
+    private Integer year;
+
+    private Integer month;
+
+    private Integer day;
+
+    @TableField("detail_time")
+    private String detailTime;
+
     public static QqLog SUCCESS(String spiderQq, String message) {
         QqLog qqLog = new QqLog();
 //        qqLog.setCreateTime(new Date());

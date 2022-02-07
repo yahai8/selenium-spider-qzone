@@ -1,7 +1,5 @@
 # selenium-spider-qzone
-# <center>selenium自动化爬取QQ空间好友说说、日志、文章、评论、相册、图片</center>
-## java爬虫，爬取qq空间好友日志、说说、并下载视频图片等内容，最后做数据化可视
-selenium自动化登录qq空间，滑块验证码认证等</br>
+## <center>selenium自动化爬取QQ空间好友说说、日志、文章、评论、相册、图片，selenium自动化登录qq空间，滑块验证码认证等</center>
 前端地址： <a href="https://github.com/yahai8/spider-console.git">https://github.com/yahai8/spider-console.git</a><br>
 后端地址： <a href="https://github.com/yahai8/selenium-spider-qzone.git">https://github.com/yahai8/selenium-spider-qzone.git</a><br>
 
